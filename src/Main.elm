@@ -38,8 +38,10 @@ type alias Model =
 
 type GameState
     = WaitForStart
-    | StartGame
-    | Run
+    | InitRound
+    | RoundRunning
+    | FinishRound
+    | Finish
 
 
 type alias StartPosition =
@@ -50,11 +52,7 @@ type alias StartPosition =
 
 init : ( Model, Cmd Msg )
 init =
-    ( initModel, generateStartPosisions )
-
-
-generateStartPosisions =
-    Random.generate RandomInit (Random.list 2 (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
+    ( initModel, Cmd.none )
 
 
 initModel : Model
@@ -101,16 +99,24 @@ update msg model =
                         1
                     else
                         newTime - model.tickTime
+
+                finishRound =
+                    (List.filter (\s -> s.state == Running) model.snakes |> List.length) <= 1
             in
                 ( { model
                     | tickTime = newTime
                     , snakes = updateSnakes model.snakes model.pressedKeys deltaTime
+                    , state =
+                        if finishRound then
+                            FinishRound
+                        else
+                            model.state
                   }
                 , Cmd.none
                 )
 
         Start ->
-            ( { model | state = StartGame }, Cmd.none )
+            ( { model | state = InitRound }, generateStartPosisions )
 
         KeyboardMsg keyMsg ->
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
@@ -126,11 +132,16 @@ update msg model =
                             { snake
                                 | points = [ ( startPosition.point, startPosition.point ) ]
                                 , angle = startPosition.angle
+                                , state = Running
                             }
                         )
                         startPositions
             in
-                ( { model | snakes = snakes }, Cmd.none )
+                ( { model | snakes = snakes, state = RoundRunning }, Cmd.none )
+
+
+generateStartPosisions =
+    Random.generate RandomInit (Random.list 2 (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
 
@@ -172,7 +183,7 @@ lineStyle color =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.state of
-        StartGame ->
+        RoundRunning ->
             Sub.batch
                 [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
                 , Time.every (second / fps) Tick
