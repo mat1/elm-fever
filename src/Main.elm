@@ -54,6 +54,7 @@ type alias Snake =
     { points : List ( Float, Float )
     , angle : Float
     , state : SnakeState
+    , name : String
     }
 
 
@@ -75,6 +76,7 @@ initModel =
         { points = []
         , angle = 0
         , state = Running
+        , name = "Matthias"
         }
     , pressedKeys = []
     }
@@ -103,7 +105,7 @@ update msg model =
             in
                 ( { model
                     | tickTime = newTime
-                    , snake = updateSnake model deltaTime
+                    , snake = updateSnake model.snake model.pressedKeys deltaTime
                   }
                 , Cmd.none
                 )
@@ -115,22 +117,22 @@ update msg model =
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
 
 
-updateSnake model deltaTime =
-    case model.snake.state of
+updateSnake snake pressedKeys deltaTime =
+    case snake.state of
         GameOver ->
-            model.snake
+            snake
 
         Running ->
-            updateSnakePoision model deltaTime
+            updateSnakePoision snake pressedKeys deltaTime
 
 
-updateSnakePoision model deltaTime =
+updateSnakePoision snake pressedKeys deltaTime =
     let
         ( lastX, lastY ) =
-            List.head model.snake.points |> Maybe.withDefault ( 0, 0 )
+            List.head snake.points |> Maybe.withDefault ( 0, 0 )
 
         angle =
-            model.snake.angle + (angleSpeed * getDirection model.pressedKeys * deltaTime)
+            snake.angle + (angleSpeed * getDirection pressedKeys * deltaTime)
 
         x =
             lastX + (speed * cos (angle * pi / 180) * deltaTime)
@@ -138,9 +140,10 @@ updateSnakePoision model deltaTime =
         y =
             lastY + (speed * sin (angle * pi / 180) * deltaTime)
     in
-        { points = ( x, y ) :: model.snake.points
-        , angle = angle
-        , state = updateSnakeState ( x, y ) (List.drop 10 model.snake.points)
+        { snake
+            | points = ( x, y ) :: snake.points
+            , angle = angle
+            , state = updateSnakeState ( x, y ) (List.drop 10 snake.points)
         }
 
 
@@ -174,7 +177,7 @@ collision ( x, y ) points =
 
 
 pathCollision ( x, y ) points =
-    List.any (\( pX, pY ) -> abs (x - pX) <= 5 && abs (y - pY) <= 5) points
+    List.any (\( pX, pY ) -> abs (x - pX) <= 6 && abs (y - pY) <= 6) points
 
 
 leftPressed pressedKeys =
