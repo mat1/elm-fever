@@ -9,8 +9,10 @@ import Collage exposing (..)
 import Time exposing (Time, second)
 import Task
 import Keyboard.Extra exposing (Key(..))
+import Random
 import Snake exposing (..)
 import Constants exposing (..)
+import List.Extra
 
 
 main =
@@ -40,26 +42,36 @@ type GameState
     | Run
 
 
+type alias StartPosition =
+    { point : Float
+    , angle : Float
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( initModel, Cmd.none )
+    ( initModel, generateStartPosisions )
+
+
+generateStartPosisions =
+    Random.generate RandomInit (Random.list 2 (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
 initModel : Model
 initModel =
     { tickTime = 0
     , snakes =
-        [ initSnake "Matthias" blue ArrowLeft ArrowRight ( 30, 30 ) 30
-        , initSnake "Blub" red CharA CharD ( -40, -40 ) -20
+        [ initSnake "Matthias" blue ArrowLeft ArrowRight
+        , initSnake "Blub" red CharA CharD
         ]
     , pressedKeys = []
     , state = WaitForStart
     }
 
 
-initSnake name color left right startPosition angle =
-    { points = [ startPosition ]
-    , angle = angle
+initSnake name color left right =
+    { points = []
+    , angle = 0
     , state = Running
     , name = name
     , left = left
@@ -76,6 +88,7 @@ type Msg
     = Tick Time
     | KeyboardMsg Keyboard.Extra.Msg
     | Start
+    | RandomInit (List StartPosition)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,6 +114,23 @@ update msg model =
 
         KeyboardMsg keyMsg ->
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
+
+        RandomInit randomPositions ->
+            let
+                startPositions =
+                    List.Extra.zip randomPositions model.snakes
+
+                snakes =
+                    List.map
+                        (\( startPosition, snake ) ->
+                            { snake
+                                | points = [ ( startPosition.point, startPosition.point ) ]
+                                , angle = startPosition.angle
+                            }
+                        )
+                        startPositions
+            in
+                ( { model | snakes = snakes }, Cmd.none )
 
 
 
