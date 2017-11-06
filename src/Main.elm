@@ -29,7 +29,7 @@ main =
 type alias Model =
     { tickTime : Time
     , initTime : Time
-    , snake : Snake
+    , snakes : List Snake
     , pressedKeys : List Key
     }
 
@@ -43,19 +43,22 @@ initModel : Model
 initModel =
     { tickTime = 0
     , initTime = 0
-    , snake = initSnake "Matthias" ArrowLeft ArrowRight
+    , snakes =
+        [ initSnake "Matthias" blue ArrowLeft ArrowRight ( 30, 30 )
+        , initSnake "Blub" red CharA CharD ( -40, -40 )
+        ]
     , pressedKeys = []
     }
 
 
-initSnake : String -> Key -> Key -> Snake
-initSnake name left right =
-    { points = []
+initSnake name color left right startPosition =
+    { points = [ startPosition ]
     , angle = 0
     , state = Running
-    , name = "Matthias"
-    , left = ArrowLeft
-    , right = ArrowRight
+    , name = name
+    , left = left
+    , right = right
+    , color = color
     }
 
 
@@ -82,7 +85,7 @@ update msg model =
             in
                 ( { model
                     | tickTime = newTime
-                    , snake = updateSnake model.snake model.pressedKeys deltaTime
+                    , snakes = List.map (\snake -> updateSnake snake model.pressedKeys deltaTime) model.snakes
                   }
                 , Cmd.none
                 )
@@ -103,11 +106,15 @@ view model =
 
 
 board model =
-    collage boardSize boardSize [ makePath model.snake.points ]
+    collage boardSize boardSize (drawSnakes model.snakes)
 
 
-makePath points =
-    path points |> traced (lineStyle blue)
+drawSnakes snakes =
+    List.map drawSnake snakes
+
+
+drawSnake snake =
+    path snake.points |> traced (lineStyle snake.color)
 
 
 lineStyle color =

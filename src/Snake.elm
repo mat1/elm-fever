@@ -2,6 +2,7 @@ module Snake exposing (..)
 
 import Keyboard.Extra exposing (Key(..))
 import Constants exposing (..)
+import Color exposing (Color)
 
 
 type alias Snake =
@@ -9,6 +10,7 @@ type alias Snake =
     , angle : Float
     , state : SnakeState
     , name : String
+    , color : Color
     , left : Key
     , right : Key
     }
@@ -33,8 +35,11 @@ updateSnakePoision snake pressedKeys deltaTime =
         ( lastX, lastY ) =
             List.head snake.points |> Maybe.withDefault ( 0, 0 )
 
+        direction =
+            getDirection snake pressedKeys
+
         angle =
-            snake.angle + (angleSpeed * getDirection pressedKeys * deltaTime)
+            snake.angle + (angleSpeed * direction * deltaTime)
 
         x =
             lastX + (speed * cos (angle * pi / 180) * deltaTime)
@@ -56,10 +61,10 @@ updateSnakeState ( x, y ) points =
         Running
 
 
-getDirection pressedKeys =
-    if leftPressed pressedKeys then
+getDirection snake pressedKeys =
+    if keyPressed snake.left pressedKeys then
         1
-    else if rightPressed pressedKeys then
+    else if keyPressed snake.right pressedKeys then
         -1
     else
         0
@@ -82,9 +87,5 @@ pathCollision ( x, y ) points =
     List.any (\( pX, pY ) -> abs (x - pX) <= 6 && abs (y - pY) <= 6) points
 
 
-leftPressed pressedKeys =
-    List.member ArrowLeft pressedKeys
-
-
-rightPressed pressedKeys =
-    List.member ArrowRight pressedKeys
+keyPressed key pressedKeys =
+    List.member key pressedKeys
