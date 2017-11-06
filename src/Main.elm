@@ -28,26 +28,32 @@ main =
 
 type alias Model =
     { tickTime : Time
-    , initTime : Time
     , snakes : List Snake
     , pressedKeys : List Key
+    , state : GameState
     }
+
+
+type GameState
+    = WaitForStart
+    | StartGame
+    | Run
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( initModel, Task.perform InitTime Time.now )
+    ( initModel, Cmd.none )
 
 
 initModel : Model
 initModel =
     { tickTime = 0
-    , initTime = 0
     , snakes =
         [ initSnake "Matthias" blue ArrowLeft ArrowRight ( 30, 30 ) 30
         , initSnake "Blub" red CharA CharD ( -40, -40 ) -20
         ]
     , pressedKeys = []
+    , state = WaitForStart
     }
 
 
@@ -68,8 +74,8 @@ initSnake name color left right startPosition angle =
 
 type Msg
     = Tick Time
-    | InitTime Time
     | KeyboardMsg Keyboard.Extra.Msg
+    | Start
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -90,8 +96,8 @@ update msg model =
                 , Cmd.none
                 )
 
-        InitTime initTime ->
-            ( { model | initTime = initTime }, Cmd.none )
+        Start ->
+            ( { model | state = StartGame }, Cmd.none )
 
         KeyboardMsg keyMsg ->
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
@@ -102,7 +108,10 @@ update msg model =
 
 
 view model =
-    div [ class "board" ] [ toHtml (board model) ]
+    div []
+        [ div [ class "board" ] [ toHtml (board model) ]
+        , button [ onClick Start ] [ Html.text "Start" ]
+        ]
 
 
 board model =
@@ -132,7 +141,12 @@ lineStyle color =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
-        , Time.every (second / fps) Tick
-        ]
+    case model.state of
+        StartGame ->
+            Sub.batch
+                [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
+                , Time.every (second / fps) Tick
+                ]
+
+        _ ->
+            Sub.none
