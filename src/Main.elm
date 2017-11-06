@@ -87,7 +87,7 @@ type Msg
     | KeyboardMsg Keyboard.Extra.Msg
     | Start
     | RandomInit (List StartPosition)
-    | WaitForNextRound Time
+    | StartNextRound Time
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -116,7 +116,7 @@ update msg model =
                 , Cmd.none
                 )
 
-        WaitForNextRound time ->
+        StartNextRound time ->
             startRound model
 
         Start ->
@@ -198,7 +198,7 @@ subscriptions model =
                 ]
 
         FinishRound ->
-            Time.every (second * 3) WaitForNextRound
+            Time.every (second * 3) StartNextRound
 
         _ ->
             Sub.none
