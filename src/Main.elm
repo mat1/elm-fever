@@ -87,6 +87,7 @@ type Msg
     | KeyboardMsg Keyboard.Extra.Msg
     | Start
     | RandomInit (List StartPosition)
+    | WaitForNextRound Time
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,8 +116,11 @@ update msg model =
                 , Cmd.none
                 )
 
+        WaitForNextRound time ->
+            startRound model
+
         Start ->
-            ( { model | state = InitRound }, generateStartPosisions )
+            startRound model
 
         KeyboardMsg keyMsg ->
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
@@ -137,7 +141,11 @@ update msg model =
                         )
                         startPositions
             in
-                ( { model | snakes = snakes, state = RoundRunning }, Cmd.none )
+                ( { model | snakes = snakes, state = RoundRunning, tickTime = 0 }, Cmd.none )
+
+
+startRound model =
+    ( { model | state = InitRound, pressedKeys = [] }, generateStartPosisions )
 
 
 generateStartPosisions =
@@ -188,6 +196,9 @@ subscriptions model =
                 [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
                 , Time.every (second / fps) Tick
                 ]
+
+        FinishRound ->
+            Time.every (second * 3) WaitForNextRound
 
         _ ->
             Sub.none
