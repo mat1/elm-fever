@@ -14,7 +14,15 @@ import Keyboard.Extra exposing (Key(..))
 
 
 fps =
-    20
+    100
+
+
+speed =
+    0.11
+
+
+angleSpeed =
+    0.2
 
 
 main =
@@ -33,14 +41,32 @@ main =
 type alias Model =
     { tickTime : Time
     , initTime : Time
-    , points : List ( Float, Float )
+    , snake : Snake
     , pressedKeys : List Key
+    }
+
+
+type alias Snake =
+    { points : List ( Float, Float )
+    , angle : Float
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 0 [ ( 0, 0 ), ( 0, 10 ) ] [], Task.perform InitTime Time.now )
+    ( initModel, Task.perform InitTime Time.now )
+
+
+initModel : Model
+initModel =
+    { tickTime = 0
+    , initTime = 0
+    , snake =
+        { points = []
+        , angle = 0
+        }
+    , pressedKeys = []
+    }
 
 
 
@@ -57,41 +83,53 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick newTime ->
-            ( { model
-                | tickTime = newTime - model.initTime
-                , points = generateNextPoints model
-              }
-            , Cmd.none
-            )
+            let
+                deltaTime =
+                    if model.tickTime == 0 then
+                        1
+                    else
+                        newTime - model.tickTime
+            in
+                ( { model
+                    | tickTime = newTime
+                    , snake = updateSnake model deltaTime
+                  }
+                , Cmd.none
+                )
 
         InitTime initTime ->
             ( { model | initTime = initTime }, Cmd.none )
 
         KeyboardMsg keyMsg ->
-            ( { model
-                | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys
-              }
-            , Cmd.none
-            )
+            ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }, Cmd.none )
 
 
-generateNextPoints model =
+updateSnake model deltaTime =
     let
         ( lastX, lastY ) =
-            List.Extra.last model.points |> Maybe.withDefault ( 0, 0 )
+            List.Extra.last model.snake.points |> Maybe.withDefault ( 0, 0 )
+
+        angle =
+            model.snake.angle + (angleSpeed * getDirection model.pressedKeys * deltaTime)
 
         x =
-            if leftPressed model.pressedKeys then
-                -2
-            else if rightPressed model.pressedKeys then
-                2
-            else
-                0
+            lastX + (speed * cos (angle * pi / 180) * deltaTime)
 
-        ( newX, newY ) =
-            ( lastX + x, lastY + 2 )
+        y =
+            lastY + (speed * sin (angle * pi / 180) * deltaTime)
     in
-        List.append model.points [ ( newX, newY ) ]
+        { points = List.append model.snake.points [ ( x, y ) ]
+        , angle = angle
+        }
+
+
+getDirection pressedKeys =
+    if leftPressed pressedKeys then
+        1
+    else if rightPressed pressedKeys then
+        -1
+    else
+        0
 
 
 leftPressed pressedKeys =
@@ -100,6 +138,10 @@ leftPressed pressedKeys =
 
 rightPressed pressedKeys =
     List.member ArrowRight pressedKeys
+
+
+
+-- View
 
 
 view model =
@@ -111,33 +153,11 @@ boardSize =
 
 
 board model =
-    collage boardSize boardSize [ makePath model.points, makePath (points 10) ]
+    collage boardSize boardSize [ makePath model.snake.points ]
 
 
 makePath points =
     path points |> traced (lineStyle blue)
-
-
-
--- make the pth point
-
-
-mkPoint : Float -> Float -> ( Float, Float )
-mkPoint t p =
-    ( 10 * p / 3
-    , 10 * sin t * sin (p / 3)
-    )
-
-
-
--- make a list of points for each time in the animation
-
-
-points : Float -> List ( Float, Float )
-points t =
-    List.map (mkPoint t) <|
-        List.map toFloat <|
-            List.range 0 5
 
 
 lineStyle color =
