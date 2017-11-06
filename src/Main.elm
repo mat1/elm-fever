@@ -61,12 +61,14 @@ initModel =
     , snakes =
         [ initSnake "Matthias" blue ArrowLeft ArrowRight
         , initSnake "Blub" red CharA CharD
+        , initSnake "Blub" green CharA CharD
         ]
     , pressedKeys = []
     , state = WaitForStart
     }
 
 
+initSnake : String -> Color -> Key -> Key -> Snake
 initSnake name color left right =
     { points = []
     , angle = 0
@@ -75,6 +77,7 @@ initSnake name color left right =
     , left = left
     , right = right
     , color = color
+    , rank = 0
     }
 
 
@@ -85,9 +88,9 @@ initSnake name color left right =
 type Msg
     = Tick Time
     | KeyboardMsg Keyboard.Extra.Msg
-    | Start
     | RandomInit (List StartPosition)
     | StartNextRound Time
+    | Start
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,17 +107,15 @@ update msg model =
                 finishRound =
                     (List.filter (\s -> s.state == Running) model.snakes |> List.length) <= 1
             in
-                ( { model
-                    | tickTime = newTime
-                    , snakes = updateSnakes model.snakes model.pressedKeys deltaTime
-                    , state =
-                        if finishRound then
-                            FinishRound
-                        else
-                            model.state
-                  }
-                , Cmd.none
-                )
+                if finishRound then
+                    ( { model | state = FinishRound }, Cmd.none )
+                else
+                    ( { model
+                        | tickTime = newTime
+                        , snakes = updateSnakes model.snakes model.pressedKeys deltaTime
+                      }
+                    , Cmd.none
+                    )
 
         StartNextRound time ->
             startRound model
@@ -145,11 +146,15 @@ update msg model =
 
 
 startRound model =
-    ( { model | state = InitRound, pressedKeys = [] }, generateStartPosisions )
+    ( { model | state = InitRound, pressedKeys = [] }, generateStartPosisions model )
 
 
-generateStartPosisions =
-    Random.generate RandomInit (Random.list 2 (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
+generateStartPosisions model =
+    let
+        numberOfSnakes =
+            List.length model.snakes
+    in
+        Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
 
@@ -198,7 +203,7 @@ subscriptions model =
                 ]
 
         FinishRound ->
-            Time.every (second * 3) StartNextRound
+            Time.every (second * 20) StartNextRound
 
         _ ->
             Sub.none

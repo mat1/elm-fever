@@ -14,6 +14,7 @@ type alias Snake =
     , color : Color
     , left : Key
     , right : Key
+    , rank : Int
     }
 
 
@@ -56,11 +57,21 @@ updateSnakePoision snakes snake pressedKeys deltaTime =
 
         collisionPoints =
             (List.drop 10 snake.points) ++ (otherSnakesPoints snakes snake)
+
+        snakeState =
+            updateSnakeState ( x, y ) collisionPoints
+
+        rank =
+            if (snakeState == GameOver) then
+                (List.filter (\s -> s.state == Running) snakes |> List.length)
+            else
+                1
     in
         { snake
             | points = ( x, y ) :: snake.points
             , angle = angle
-            , state = updateSnakeState ( x, y ) collisionPoints
+            , state = snakeState
+            , rank = rank
         }
 
 

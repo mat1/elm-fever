@@ -2,7 +2,7 @@ module Constants exposing (..)
 
 
 fps =
-    100
+    1
 
 
 speed =
