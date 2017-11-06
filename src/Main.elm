@@ -25,6 +25,10 @@ angleSpeed =
     0.2
 
 
+boardSize =
+    800
+
+
 main =
     program
         { init = init
@@ -49,7 +53,13 @@ type alias Model =
 type alias Snake =
     { points : List ( Float, Float )
     , angle : Float
+    , state : SnakeState
     }
+
+
+type SnakeState
+    = Running
+    | GameOver
 
 
 init : ( Model, Cmd Msg )
@@ -64,6 +74,7 @@ initModel =
     , snake =
         { points = []
         , angle = 0
+        , state = Running
         }
     , pressedKeys = []
     }
@@ -105,6 +116,15 @@ update msg model =
 
 
 updateSnake model deltaTime =
+    case model.snake.state of
+        GameOver ->
+            model.snake
+
+        Running ->
+            updateSnakePoision model deltaTime
+
+
+updateSnakePoision model deltaTime =
     let
         ( lastX, lastY ) =
             List.Extra.last model.snake.points |> Maybe.withDefault ( 0, 0 )
@@ -120,7 +140,15 @@ updateSnake model deltaTime =
     in
         { points = List.append model.snake.points [ ( x, y ) ]
         , angle = angle
+        , state = updateSnakeState ( x, y ) model.snake.points
         }
+
+
+updateSnakeState ( x, y ) points =
+    if collision ( x, y ) points then
+        GameOver
+    else
+        Running
 
 
 getDirection pressedKeys =
@@ -130,6 +158,17 @@ getDirection pressedKeys =
         -1
     else
         0
+
+
+collision ( x, y ) points =
+    let
+        half =
+            boardSize / 2
+    in
+        if (abs x) > half || (abs y) > half then
+            True
+        else
+            False
 
 
 leftPressed pressedKeys =
@@ -146,10 +185,6 @@ rightPressed pressedKeys =
 
 view model =
     div [ class "board" ] [ toHtml (board model) ]
-
-
-boardSize =
-    800
 
 
 board model =
