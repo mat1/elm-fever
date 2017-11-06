@@ -127,7 +127,7 @@ updateSnake model deltaTime =
 updateSnakePoision model deltaTime =
     let
         ( lastX, lastY ) =
-            List.Extra.last model.snake.points |> Maybe.withDefault ( 0, 0 )
+            List.head model.snake.points |> Maybe.withDefault ( 0, 0 )
 
         angle =
             model.snake.angle + (angleSpeed * getDirection model.pressedKeys * deltaTime)
@@ -138,9 +138,9 @@ updateSnakePoision model deltaTime =
         y =
             lastY + (speed * sin (angle * pi / 180) * deltaTime)
     in
-        { points = List.append model.snake.points [ ( x, y ) ]
+        { points = ( x, y ) :: model.snake.points
         , angle = angle
-        , state = updateSnakeState ( x, y ) model.snake.points
+        , state = updateSnakeState ( x, y ) (List.drop 10 model.snake.points)
         }
 
 
@@ -167,8 +167,14 @@ collision ( x, y ) points =
     in
         if (abs x) > half || (abs y) > half then
             True
+        else if pathCollision ( x, y ) points then
+            True
         else
             False
+
+
+pathCollision ( x, y ) points =
+    List.any (\( pX, pY ) -> abs (x - pX) <= 5 && abs (y - pY) <= 5) points
 
 
 leftPressed pressedKeys =
