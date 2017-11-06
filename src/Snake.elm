@@ -3,6 +3,7 @@ module Snake exposing (..)
 import Keyboard.Extra exposing (Key(..))
 import Constants exposing (..)
 import Color exposing (Color)
+import Time exposing (Time)
 
 
 type alias Snake =
@@ -21,16 +22,22 @@ type SnakeState
     | GameOver
 
 
-updateSnake snake pressedKeys deltaTime =
+updateSnakes snakes pressedKeys deltaTime =
+    List.map (\snake -> updateSnake snakes snake pressedKeys deltaTime) snakes
+
+
+updateSnake : List Snake -> Snake -> List Key -> Time -> Snake
+updateSnake snakes snake pressedKeys deltaTime =
     case snake.state of
         GameOver ->
             snake
 
         Running ->
-            updateSnakePoision snake pressedKeys deltaTime
+            updateSnakePoision snakes snake pressedKeys deltaTime
 
 
-updateSnakePoision snake pressedKeys deltaTime =
+updateSnakePoision : List Snake -> Snake -> List Key -> Time -> Snake
+updateSnakePoision snakes snake pressedKeys deltaTime =
     let
         ( lastX, lastY ) =
             List.head snake.points |> Maybe.withDefault ( 0, 0 )
@@ -46,12 +53,20 @@ updateSnakePoision snake pressedKeys deltaTime =
 
         y =
             lastY + (speed * sin (angle * pi / 180) * deltaTime)
+
+        collisionPoints =
+            (List.drop 10 snake.points) ++ (otherSnakesPoints snakes snake)
     in
         { snake
             | points = ( x, y ) :: snake.points
             , angle = angle
-            , state = updateSnakeState ( x, y ) (List.drop 10 snake.points)
+            , state = updateSnakeState ( x, y ) collisionPoints
         }
+
+
+otherSnakesPoints snakes snake =
+    List.filter (\s -> s.name /= snake.name) snakes
+        |> List.concatMap .points
 
 
 updateSnakeState ( x, y ) points =

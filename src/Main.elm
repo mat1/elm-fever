@@ -85,7 +85,7 @@ update msg model =
             in
                 ( { model
                     | tickTime = newTime
-                    , snakes = List.map (\snake -> updateSnake snake model.pressedKeys deltaTime) model.snakes
+                    , snakes = updateSnakes model.snakes model.pressedKeys deltaTime
                   }
                 , Cmd.none
                 )
