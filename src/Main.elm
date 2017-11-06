@@ -44,16 +44,16 @@ initModel =
     { tickTime = 0
     , initTime = 0
     , snakes =
-        [ initSnake "Matthias" blue ArrowLeft ArrowRight ( 30, 30 )
-        , initSnake "Blub" red CharA CharD ( -40, -40 )
+        [ initSnake "Matthias" blue ArrowLeft ArrowRight ( 30, 30 ) 30
+        , initSnake "Blub" red CharA CharD ( -40, -40 ) -20
         ]
     , pressedKeys = []
     }
 
 
-initSnake name color left right startPosition =
+initSnake name color left right startPosition angle =
     { points = [ startPosition ]
-    , angle = 0
+    , angle = angle
     , state = Running
     , name = name
     , left = left
