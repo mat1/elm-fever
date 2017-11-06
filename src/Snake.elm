@@ -9,6 +9,8 @@ type alias Snake =
     , angle : Float
     , state : SnakeState
     , name : String
+    , left : Key
+    , right : Key
     }
 
 

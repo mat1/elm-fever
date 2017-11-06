@@ -43,13 +43,19 @@ initModel : Model
 initModel =
     { tickTime = 0
     , initTime = 0
-    , snake =
-        { points = []
-        , angle = 0
-        , state = Running
-        , name = "Matthias"
-        }
+    , snake = initSnake "Matthias" ArrowLeft ArrowRight
     , pressedKeys = []
+    }
+
+
+initSnake : String -> Key -> Key -> Snake
+initSnake name left right =
+    { points = []
+    , angle = 0
+    , state = Running
+    , name = "Matthias"
+    , left = ArrowLeft
+    , right = ArrowRight
     }
 
 
