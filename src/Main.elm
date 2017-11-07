@@ -18,8 +18,7 @@ import ScoreBoard exposing (..)
 
 snakes =
     [ initSnake "Matthias" blue ArrowLeft ArrowRight
-    , initSnake "Blub" red CharA CharD
-    , initSnake "Test" green CharA CharD
+    , initSnake "Test" red CharA CharD
     ]
 
 
