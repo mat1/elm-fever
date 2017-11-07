@@ -4,16 +4,16 @@ import Html exposing (..)
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (class, style)
 import Color exposing (..)
-import Color.Convert exposing (..)
 import Element exposing (..)
 import Collage exposing (..)
 import Time exposing (Time, second)
 import Task
 import Keyboard.Extra exposing (Key(..))
 import Random
+import List.Extra
 import Snake exposing (..)
 import Constants exposing (..)
-import List.Extra
+import ScoreBoard exposing (..)
 
 
 snakes =
@@ -46,13 +46,6 @@ type alias Model =
     , pressedKeys : List Key
     , state : GameState
     , scoreBoard : List Score
-    }
-
-
-type alias Score =
-    { name : String
-    , color : Color
-    , score : Int
     }
 
 
@@ -175,22 +168,6 @@ generateStartPosisions model =
     Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
-updateScoreBoard scoreBoard snakes =
-    List.map (\snake -> Score snake.name snake.color (getScore snake scoreBoard)) snakes
-
-
-getScore snake scoreBoard =
-    let
-        currentScore =
-            List.filter (\s -> s.name == snake.name) scoreBoard |> List.map .score |> List.sum
-    in
-        currentScore + (rankToPoints snake.rank)
-
-
-rankToPoints rank =
-    numberOfSnakes - rank
-
-
 
 -- View
 
@@ -202,22 +179,6 @@ view model =
             , viewScoreBoard model.scoreBoard
             ]
         , button [ onClick Start ] [ Html.text "Start" ]
-        ]
-
-
-viewScoreBoard scoreBoard =
-    div [ class "scoreboard" ]
-        [ h3 [] [ Html.text "Scoreboard" ]
-        , table [] (List.sortBy .score scoreBoard |> List.reverse |> List.map viewScore)
-        ]
-
-
-viewScore score =
-    tr []
-        [ td [ style [ ( "background", (colorToHex score.color) ), ( "width", "5px" ) ] ] []
-        , td [] []
-        , td [] [ Html.text score.name ]
-        , td [] [ Html.text (toString score.score) ]
         ]
 
 
