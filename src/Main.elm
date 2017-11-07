@@ -74,8 +74,12 @@ initModel =
     , snakes = snakes
     , pressedKeys = []
     , state = WaitForStart
-    , scoreBoard = List.map (\s -> Score s.name s.color 0) snakes
+    , scoreBoard = initScoreBoard snakes
     }
+
+
+initScoreBoard snakes =
+    List.map (\s -> Score s.name s.color 0) snakes
 
 
 initSnake : String -> Color -> Key -> Key -> Snake
