@@ -11,6 +11,9 @@ import Task
 import Keyboard.Extra exposing (Key(..))
 import Random
 import List.Extra
+import WebSocket
+import Json.Encode as Encode
+import Json.Decode as Decode
 import Snake exposing (..)
 import Constants exposing (..)
 import ScoreBoard exposing (..)
@@ -24,6 +27,10 @@ snakes =
 
 numberOfSnakes =
     List.length snakes
+
+
+serverUrl =
+    "ws://localhost:8080/"
 
 
 main =
@@ -45,6 +52,7 @@ type alias Model =
     , pressedKeys : List Key
     , state : GameState
     , scoreBoard : List Score
+    , message : String
     }
 
 
@@ -62,6 +70,18 @@ type alias StartPosition =
     }
 
 
+type alias Player =
+    { name : String
+    , color : String
+    }
+
+
+type alias RegisterPlayer =
+    { command : String
+    , player : Player
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( initModel, Cmd.none )
@@ -74,6 +94,7 @@ initModel =
     , pressedKeys = []
     , state = WaitForStart
     , scoreBoard = initScoreBoard snakes
+    , message = ""
     }
 
 
@@ -104,6 +125,8 @@ type Msg
     | RandomInit (List StartPosition)
     | StartNextRound Time
     | Start
+    | Register
+    | NewMessage String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -138,6 +161,12 @@ update msg model =
         StartNextRound time ->
             startRound model
 
+        Register ->
+            ( model, WebSocket.send (serverUrl) (registerToJson <| RegisterPlayer "REGISTER" (Player "Matthias" "red")) )
+
+        NewMessage str ->
+            ( { model | message = str }, Cmd.none )
+
         Start ->
             startRound model
 
@@ -171,6 +200,23 @@ generateStartPosisions model =
     Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
+registerToJson : RegisterPlayer -> String
+registerToJson register =
+    let
+        jsonValue =
+            Encode.object
+                [ ( "name", Encode.string register.command )
+                , ( "player"
+                  , Encode.object
+                        [ ( "name", Encode.string register.player.name )
+                        , ( "color", Encode.string register.player.color )
+                        ]
+                  )
+                ]
+    in
+        (Encode.encode 0 jsonValue)
+
+
 
 -- View
 
@@ -182,6 +228,7 @@ view model =
             , div [ class "info" ]
                 [ viewScoreBoard model.scoreBoard
                 , button [ onClick Start ] [ Html.text "Start" ]
+                , button [ onClick Register ] [ Html.text "Register" ]
                 ]
             ]
         ]
@@ -225,4 +272,4 @@ subscriptions model =
             Time.every (second * 3) StartNextRound
 
         _ ->
-            Sub.none
+            WebSocket.listen serverUrl NewMessage
