@@ -14,4 +14,4 @@ angleSpeed =
 
 
 boardSize =
-    800
+    750

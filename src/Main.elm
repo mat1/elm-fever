@@ -179,9 +179,11 @@ view model =
     div []
         [ div [ class "boardcontainer" ]
             [ div [ class "board" ] [ toHtml (board model) ]
-            , viewScoreBoard model.scoreBoard
+            , div [ class "info" ]
+                [ viewScoreBoard model.scoreBoard
+                , button [ onClick Start ] [ Html.text "Start" ]
+                ]
             ]
-        , button [ onClick Start ] [ Html.text "Start" ]
         ]
 
 
