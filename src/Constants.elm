@@ -15,7 +15,3 @@ angleSpeed =
 
 boardSize =
     800
-
-
-numberOfSnakes =
-    3

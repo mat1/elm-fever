@@ -2,8 +2,9 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Events exposing (onClick)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, style)
 import Color exposing (..)
+import Color.Convert exposing (..)
 import Element exposing (..)
 import Collage exposing (..)
 import Time exposing (Time, second)
@@ -13,6 +14,17 @@ import Random
 import Snake exposing (..)
 import Constants exposing (..)
 import List.Extra
+
+
+snakes =
+    [ initSnake "Matthias" blue ArrowLeft ArrowRight
+    , initSnake "Blub" red CharA CharD
+    , initSnake "Test" green CharA CharD
+    ]
+
+
+numberOfSnakes =
+    List.length snakes
 
 
 main =
@@ -66,14 +78,10 @@ init =
 initModel : Model
 initModel =
     { tickTime = 0
-    , snakes =
-        [ initSnake "Matthias" blue ArrowLeft ArrowRight
-        , initSnake "Blub" red CharA CharD
-        , initSnake "Beni" green CharA CharD
-        ]
+    , snakes = snakes
     , pressedKeys = []
     , state = WaitForStart
-    , scoreBoard = []
+    , scoreBoard = List.map (\s -> Score s.name s.color 0) snakes
     }
 
 
@@ -164,11 +172,7 @@ startRound model =
 
 
 generateStartPosisions model =
-    let
-        numberOfSnakes =
-            List.length model.snakes
-    in
-        Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
+    Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
 updateScoreBoard scoreBoard snakes =
@@ -184,7 +188,7 @@ getScore snake scoreBoard =
 
 
 rankToPoints rank =
-    (numberOfSnakes - rank) * 10
+    numberOfSnakes - rank
 
 
 
@@ -193,9 +197,27 @@ rankToPoints rank =
 
 view model =
     div []
-        [ div [ class "board" ] [ toHtml (board model) ]
+        [ div [ class "boardcontainer" ]
+            [ div [ class "board" ] [ toHtml (board model) ]
+            , viewScoreBoard model.scoreBoard
+            ]
         , button [ onClick Start ] [ Html.text "Start" ]
-        , div [] [ Html.text (toString model.scoreBoard) ]
+        ]
+
+
+viewScoreBoard scoreBoard =
+    div [ class "scoreboard" ]
+        [ h3 [] [ Html.text "Scoreboard" ]
+        , table [] (List.sortBy .score scoreBoard |> List.reverse |> List.map viewScore)
+        ]
+
+
+viewScore score =
+    tr []
+        [ td [ style [ ( "background", (colorToHex score.color) ), ( "width", "5px" ) ] ] []
+        , td [] []
+        , td [] [ Html.text score.name ]
+        , td [] [ Html.text (toString score.score) ]
         ]
 
 
