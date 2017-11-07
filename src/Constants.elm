@@ -2,7 +2,7 @@ module Constants exposing (..)
 
 
 fps =
-    1
+    100
 
 
 speed =
@@ -15,3 +15,7 @@ angleSpeed =
 
 boardSize =
     800
+
+
+numberOfSnakes =
+    3

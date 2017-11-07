@@ -33,6 +33,14 @@ type alias Model =
     , snakes : List Snake
     , pressedKeys : List Key
     , state : GameState
+    , scoreBoard : List Score
+    }
+
+
+type alias Score =
+    { name : String
+    , color : Color
+    , score : Int
     }
 
 
@@ -61,10 +69,11 @@ initModel =
     , snakes =
         [ initSnake "Matthias" blue ArrowLeft ArrowRight
         , initSnake "Blub" red CharA CharD
-        , initSnake "Blub" green CharA CharD
+        , initSnake "Beni" green CharA CharD
         ]
     , pressedKeys = []
     , state = WaitForStart
+    , scoreBoard = []
     }
 
 
@@ -108,7 +117,12 @@ update msg model =
                     (List.filter (\s -> s.state == Running) model.snakes |> List.length) <= 1
             in
                 if finishRound then
-                    ( { model | state = FinishRound }, Cmd.none )
+                    ( { model
+                        | state = FinishRound
+                        , scoreBoard = updateScoreBoard model.scoreBoard model.snakes
+                      }
+                    , Cmd.none
+                    )
                 else
                     ( { model
                         | tickTime = newTime
@@ -157,6 +171,22 @@ generateStartPosisions model =
         Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
+updateScoreBoard scoreBoard snakes =
+    List.map (\snake -> Score snake.name snake.color (getScore snake scoreBoard)) snakes
+
+
+getScore snake scoreBoard =
+    let
+        currentScore =
+            List.filter (\s -> s.name == snake.name) scoreBoard |> List.map .score |> List.sum
+    in
+        currentScore + (rankToPoints snake.rank)
+
+
+rankToPoints rank =
+    (numberOfSnakes - rank) * 10
+
+
 
 -- View
 
@@ -165,6 +195,7 @@ view model =
     div []
         [ div [ class "board" ] [ toHtml (board model) ]
         , button [ onClick Start ] [ Html.text "Start" ]
+        , div [] [ Html.text (toString model.scoreBoard) ]
         ]
 
 
@@ -203,7 +234,7 @@ subscriptions model =
                 ]
 
         FinishRound ->
-            Time.every (second * 20) StartNextRound
+            Time.every (second * 3) StartNextRound
 
         _ ->
             Sub.none
