@@ -2,25 +2,9 @@ module Snake exposing (..)
 
 import Keyboard.Extra exposing (Key(..))
 import Constants exposing (..)
-import Color exposing (Color)
 import Time exposing (Time)
-
-
-type alias Snake =
-    { points : List ( Float, Float )
-    , angle : Float
-    , state : SnakeState
-    , name : String
-    , color : Color
-    , left : Key
-    , right : Key
-    , rank : Int
-    }
-
-
-type SnakeState
-    = Running
-    | GameOver
+import SnakeModel exposing (..)
+import RandomBot
 
 
 updateSnakes snakes pressedKeys deltaTime =
@@ -44,7 +28,7 @@ updateSnakePoision snakes snake pressedKeys deltaTime =
             List.head snake.points |> Maybe.withDefault ( 0, 0 )
 
         direction =
-            getDirection snake pressedKeys
+            getDirection snakes snake pressedKeys
 
         angle =
             snake.angle + (angleSpeed * direction * deltaTime)
@@ -87,7 +71,17 @@ updateSnakeState ( x, y ) points =
         Running
 
 
-getDirection snake pressedKeys =
+getDirection : List Snake -> Snake -> List Key -> Float
+getDirection snakes snake pressedKeys =
+    case snake.player of
+        Human ->
+            getDirectionFromHuman snake pressedKeys
+
+        Bot ->
+            RandomBot.getDirection snakes snake
+
+
+getDirectionFromHuman snake pressedKeys =
     if keyPressed snake.left pressedKeys then
         1
     else if keyPressed snake.right pressedKeys then

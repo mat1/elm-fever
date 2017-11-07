@@ -12,13 +12,14 @@ import Keyboard.Extra exposing (Key(..))
 import Random
 import List.Extra
 import Snake exposing (..)
+import SnakeModel exposing (..)
 import Constants exposing (..)
 import ScoreBoard exposing (..)
 
 
 snakes =
     [ initSnake "Matthias" blue ArrowLeft ArrowRight
-    , initSnake "Test" red CharA CharD
+    , initSnakeBot "Test" red
     ]
 
 
@@ -81,8 +82,8 @@ initScoreBoard snakes =
     List.map (\s -> Score s.name s.color 0) snakes
 
 
-initSnake : String -> Color -> Key -> Key -> Snake
-initSnake name color left right =
+createSnake : String -> Color -> Key -> Key -> Player -> Snake
+createSnake name color left right player =
     { points = []
     , angle = 0
     , state = Running
@@ -91,7 +92,16 @@ initSnake name color left right =
     , right = right
     , color = color
     , rank = 0
+    , player = player
     }
+
+
+initSnake name color left right =
+    createSnake name color left right Human
+
+
+initSnakeBot name color =
+    createSnake name color CharA CharB Bot
 
 
 
