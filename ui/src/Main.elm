@@ -12,16 +12,15 @@ import Keyboard.Extra exposing (Key(..))
 import Random
 import List.Extra
 import WebSocket
-import Json.Encode as Encode
-import Json.Decode as Decode
 import Snake exposing (..)
 import Constants exposing (..)
 import ScoreBoard exposing (..)
+import Api exposing (..)
 
 
 snakes =
-    [ initSnake "Matthias" blue ArrowLeft ArrowRight
-    , initSnake "Test" red CharA CharD
+    [ initSnake "Florian" blue ArrowLeft ArrowRight
+    , initSnake "M" red CharA CharD
     ]
 
 
@@ -31,6 +30,10 @@ numberOfSnakes =
 
 serverUrl =
     "ws://localhost:8080/"
+
+
+playersUrl =
+    serverUrl ++ "players"
 
 
 main =
@@ -67,18 +70,6 @@ type GameState
 type alias StartPosition =
     { point : Float
     , angle : Float
-    }
-
-
-type alias Player =
-    { name : String
-    , color : String
-    }
-
-
-type alias RegisterPlayer =
-    { command : String
-    , player : Player
     }
 
 
@@ -126,7 +117,7 @@ type Msg
     | StartNextRound Time
     | Start
     | Register
-    | NewMessage String
+    | UpdatePlayers String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -162,10 +153,20 @@ update msg model =
             startRound model
 
         Register ->
-            ( model, WebSocket.send (serverUrl) (registerToJson <| RegisterPlayer "REGISTER" (Player "Matthias" "red")) )
+            ( model, WebSocket.send (serverUrl ++ "/register") "" )
 
-        NewMessage str ->
-            ( { model | message = str }, Cmd.none )
+        UpdatePlayers str ->
+            let
+                players =
+                    decodePlayers str
+
+                newSnakes =
+                    toSnakes players
+
+                updatedSnakes =
+                    snakes ++ newSnakes
+            in
+                ( { model | message = str, snakes = updatedSnakes, scoreBoard = initScoreBoard updatedSnakes }, Cmd.none )
 
         Start ->
             startRound model
@@ -200,21 +201,24 @@ generateStartPosisions model =
     Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
-registerToJson : RegisterPlayer -> String
-registerToJson register =
-    let
-        jsonValue =
-            Encode.object
-                [ ( "name", Encode.string register.command )
-                , ( "player"
-                  , Encode.object
-                        [ ( "name", Encode.string register.player.name )
-                        , ( "color", Encode.string register.player.color )
-                        ]
-                  )
-                ]
-    in
-        (Encode.encode 0 jsonValue)
+toSnakes : List Player -> List Snake
+toSnakes players =
+    List.map (\p -> initSnake p.name (stringToColor p.color) CharA CharB) players
+
+
+stringToColor color =
+    if color == "red" then
+        red
+    else if color == "orange" then
+        orange
+    else if color == "yellow" then
+        yellow
+    else if color == "green" then
+        green
+    else if color == "blue" then
+        blue
+    else
+        brown
 
 
 
@@ -272,4 +276,4 @@ subscriptions model =
             Time.every (second * 3) StartNextRound
 
         _ ->
-            WebSocket.listen serverUrl NewMessage
+            WebSocket.listen (playersUrl) UpdatePlayers
