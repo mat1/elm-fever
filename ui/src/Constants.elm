@@ -1,8 +1,14 @@
 module Constants exposing (..)
 
+import Time exposing (Time, second, millisecond)
+
 
 fps =
     100
+
+
+updateGameStateInMilliseconds =
+    50 * millisecond
 
 
 speed =

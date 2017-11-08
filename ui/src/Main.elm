@@ -6,7 +6,7 @@ import Html.Attributes exposing (class, style)
 import Color exposing (..)
 import Element exposing (..)
 import Collage exposing (..)
-import Time exposing (Time, second)
+import Time exposing (Time, second, millisecond)
 import Task
 import Keyboard.Extra exposing (Key(..))
 import Random
@@ -24,16 +24,16 @@ snakes =
     ]
 
 
-numberOfSnakes =
-    List.length snakes
-
-
 serverUrl =
     "ws://localhost:8080/"
 
 
 playersUrl =
     serverUrl ++ "players"
+
+
+gameStateUrl =
+    serverUrl ++ "gameState"
 
 
 main =
@@ -135,6 +135,7 @@ type Msg
     | Start
     | Register
     | UpdatePlayers String
+    | UpdateGameState Time
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,6 +166,9 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        UpdateGameState time ->
+            ( model, WebSocket.send gameStateUrl (modelToJson model) )
 
         StartNextRound time ->
             startRound model
@@ -287,6 +291,7 @@ subscriptions model =
             Sub.batch
                 [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
                 , Time.every (second / fps) Tick
+                , Time.every updateGameStateInMilliseconds UpdateGameState
                 ]
 
         FinishRound ->
