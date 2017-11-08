@@ -13,6 +13,7 @@ import Random
 import List.Extra
 import WebSocket
 import Snake exposing (..)
+import SnakeModel exposing (..)
 import Constants exposing (..)
 import ScoreBoard exposing (..)
 import Api exposing (..)
@@ -34,6 +35,10 @@ playersUrl =
 
 gameStateUrl =
     serverUrl ++ "gameState"
+
+
+movesUrl =
+    serverUrl ++ "moves"
 
 
 main =
@@ -118,7 +123,7 @@ initSnakeOther name color =
     , right = CharZ
     , color = color
     , rank = 0
-    , snakePlayer = Snake.Other
+    , snakePlayer = SnakeModel.Other
     , direction = Straight
     }
 
@@ -135,6 +140,7 @@ type Msg
     | Start
     | Register
     | UpdatePlayers String
+    | UpdateDirection String
     | UpdateGameState Time
 
 
@@ -169,6 +175,16 @@ update msg model =
 
         UpdateGameState time ->
             ( model, WebSocket.send gameStateUrl (modelToJson model) )
+
+        UpdateDirection str ->
+            let
+                playerMove =
+                    Debug.log "Hello: " (decodeMove str)
+
+                snakes =
+                    List.map (\s -> updateDirection s playerMove) model.snakes
+            in
+                ( { model | snakes = snakes }, Cmd.none )
 
         StartNextRound time ->
             startRound model
@@ -212,6 +228,13 @@ update msg model =
                         startPositions
             in
                 ( { model | snakes = snakes, state = RoundRunning, tickTime = 0 }, Cmd.none )
+
+
+updateDirection snake move =
+    if snake.name == move.name then
+        { snake | direction = move.direction }
+    else
+        snake
 
 
 startRound model =
@@ -292,10 +315,14 @@ subscriptions model =
                 [ Sub.map KeyboardMsg Keyboard.Extra.subscriptions
                 , Time.every (second / fps) Tick
                 , Time.every updateGameStateInMilliseconds UpdateGameState
+                , WebSocket.listen (movesUrl) UpdateDirection
                 ]
 
         FinishRound ->
             Time.every (second * 3) StartNextRound
 
         _ ->
-            WebSocket.listen (playersUrl) UpdatePlayers
+            Sub.batch
+                [ WebSocket.listen (playersUrl) UpdatePlayers
+                , WebSocket.listen (movesUrl) UpdateDirection
+                ]

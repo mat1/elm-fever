@@ -4,45 +4,7 @@ import Keyboard.Extra exposing (Key(..))
 import Constants exposing (..)
 import Time exposing (Time)
 import Color exposing (Color)
-
-
-type alias Snake =
-    { points : List ( Float, Float )
-    , angle : Float
-    , state : SnakeState
-    , name : String
-    , color : Color
-    , left : Key
-    , right : Key
-    , rank : Int
-    , snakePlayer : SnakePlayer
-    , direction : Direction
-    }
-
-
-type SnakePlayer
-    = Self
-    | Other
-
-
-type SnakeState
-    = Running
-    | GameOver
-
-
-type Direction
-    = Left
-    | Straight
-    | Right
-
-
-toDirection str =
-    if str == "LEFT" then
-        Left
-    else if str == "RIGHT" then
-        Right
-    else
-        Straight
+import SnakeModel exposing (..)
 
 
 directionToFloat direction =
@@ -82,7 +44,7 @@ updateSnakePoision snakes snake pressedKeys deltaTime =
                 Self ->
                     getDirection snake pressedKeys
 
-                Other ->
+                SnakeModel.Other ->
                     directionToFloat snake.direction
 
         angle =

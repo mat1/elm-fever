@@ -4,12 +4,39 @@ import Constants exposing (..)
 import Json.Encode as Encode
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (decode, required, optional)
+import SnakeModel exposing (..)
 
 
 type alias Player =
     { name : String
     , color : String
     }
+
+
+type alias Move =
+    { name : String
+    , direction : Direction
+    }
+
+
+type alias MoveString =
+    { name : String
+    , direction : String
+    }
+
+
+decodeMove : String -> Move
+decodeMove str =
+    Decode.decodeString moveDecoder str
+        |> Result.map (\m -> Move m.name (toDirection m.direction))
+        |> Result.withDefault (Move "notexising" Straight)
+
+
+moveDecoder : Decode.Decoder MoveString
+moveDecoder =
+    decode MoveString
+        |> required "name" Decode.string
+        |> required "direction" Decode.string
 
 
 decodePlayers : String -> List Player
