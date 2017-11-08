@@ -103,6 +103,21 @@ initSnake name color left right =
     , right = right
     , color = color
     , rank = 0
+    , snakePlayer = Self
+    }
+
+
+initSnakeOther : String -> Color -> Snake
+initSnakeOther name color =
+    { points = []
+    , angle = 0
+    , state = Running
+    , name = name
+    , left = CharZ
+    , right = CharZ
+    , color = color
+    , rank = 0
+    , snakePlayer = Snake.Other
     }
 
 
@@ -203,7 +218,7 @@ generateStartPosisions model =
 
 toSnakes : List Player -> List Snake
 toSnakes players =
-    List.map (\p -> initSnake p.name (stringToColor p.color) CharA CharB) players
+    List.map (\p -> initSnakeOther p.name (stringToColor p.color)) players
 
 
 stringToColor color =

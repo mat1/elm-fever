@@ -15,7 +15,13 @@ type alias Snake =
     , left : Key
     , right : Key
     , rank : Int
+    , snakePlayer : SnakePlayer
     }
+
+
+type SnakePlayer
+    = Self
+    | Other
 
 
 type SnakeState
