@@ -198,7 +198,7 @@ startRound model =
 
 
 generateStartPosisions model =
-    Random.generate RandomInit (Random.list numberOfSnakes (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
+    Random.generate RandomInit (Random.list (List.length model.snakes) (Random.map2 StartPosition (Random.float -300 300) (Random.float 0 360)))
 
 
 toSnakes : List Player -> List Snake
