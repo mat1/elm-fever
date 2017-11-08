@@ -16,6 +16,7 @@ type alias Snake =
     , right : Key
     , rank : Int
     , snakePlayer : SnakePlayer
+    , direction : Direction
     }
 
 
@@ -27,6 +28,33 @@ type SnakePlayer
 type SnakeState
     = Running
     | GameOver
+
+
+type Direction
+    = Left
+    | Straight
+    | Right
+
+
+toDirection str =
+    if str == "LEFT" then
+        Left
+    else if str == "RIGHT" then
+        Right
+    else
+        Straight
+
+
+directionToFloat direction =
+    case direction of
+        Left ->
+            1
+
+        Right ->
+            -1
+
+        Straight ->
+            0
 
 
 updateSnakes snakes pressedKeys deltaTime =
@@ -50,7 +78,12 @@ updateSnakePoision snakes snake pressedKeys deltaTime =
             List.head snake.points |> Maybe.withDefault ( 0, 0 )
 
         direction =
-            getDirection snake pressedKeys
+            case snake.snakePlayer of
+                Self ->
+                    getDirection snake pressedKeys
+
+                Other ->
+                    directionToFloat snake.direction
 
         angle =
             snake.angle + (angleSpeed * direction * deltaTime)

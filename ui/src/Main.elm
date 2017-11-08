@@ -104,6 +104,7 @@ initSnake name color left right =
     , color = color
     , rank = 0
     , snakePlayer = Self
+    , direction = Straight
     }
 
 
@@ -118,6 +119,7 @@ initSnakeOther name color =
     , color = color
     , rank = 0
     , snakePlayer = Snake.Other
+    , direction = Straight
     }
 
 
